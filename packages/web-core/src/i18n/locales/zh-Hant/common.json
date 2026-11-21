@@ -559,5 +559,28 @@
     "submitting": "正在提交回答...",
     "answeredCount": "已回答{{count}}個問題",
     "answeredCount_other": "已回答{{count}}個問題"
+  },
+  "localAuth": {
+    "signInTitle": "登入 Vibe Kanban",
+    "signInDescription": "使用此伺服器上的帳戶登入。",
+    "setupTitle": "建立第一個帳戶",
+    "setupDescription": "此伺服器使用本機帳戶。請建立第一個帳戶來保護它。",
+    "accountTitle": "本機帳戶",
+    "localModeDescription": "此伺服器使用儲存在本機的帳戶，不需要雲端登入。",
+    "username": "使用者名稱",
+    "password": "密碼",
+    "confirmPassword": "確認密碼",
+    "signIn": "登入",
+    "signingIn": "正在登入…",
+    "createAccount": "建立帳戶",
+    "creatingAccount": "正在建立帳戶…",
+    "passwordMismatch": "兩次輸入的密碼不一致。",
+    "signedInAs": "已登入為 {{name}}",
+    "signOut": "登出",
+    "signingOut": "正在登出…",
+    "loading": "載入中…",
+    "statusError": "無法連線到伺服器。",
+    "retry": "重試",
+    "genericError": "發生問題，請再試一次。"
   }
 }

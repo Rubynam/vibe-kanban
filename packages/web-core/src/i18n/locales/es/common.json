@@ -559,5 +559,28 @@
     "submitting": "Enviando respuestas...",
     "answeredCount": "Respondió {{count}} pregunta",
     "answeredCount_other": "Respondió {{count}} preguntas"
+  },
+  "localAuth": {
+    "signInTitle": "Inicia sesión en Vibe Kanban",
+    "signInDescription": "Inicia sesión con tu cuenta de este servidor.",
+    "setupTitle": "Crea la primera cuenta",
+    "setupDescription": "Este servidor usa cuentas locales. Crea la primera cuenta para protegerlo.",
+    "accountTitle": "Cuenta local",
+    "localModeDescription": "Este servidor usa cuentas locales guardadas en esta máquina; no hace falta iniciar sesión en la nube.",
+    "username": "Nombre de usuario",
+    "password": "Contraseña",
+    "confirmPassword": "Confirmar contraseña",
+    "signIn": "Iniciar sesión",
+    "signingIn": "Iniciando sesión…",
+    "createAccount": "Crear cuenta",
+    "creatingAccount": "Creando cuenta…",
+    "passwordMismatch": "Las contraseñas no coinciden.",
+    "signedInAs": "Sesión iniciada como {{name}}",
+    "signOut": "Cerrar sesión",
+    "signingOut": "Cerrando sesión…",
+    "loading": "Cargando…",
+    "statusError": "No se pudo conectar con el servidor.",
+    "retry": "Reintentar",
+    "genericError": "Algo salió mal. Inténtalo de nuevo."
   }
 }

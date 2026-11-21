@@ -559,5 +559,28 @@
     "submitting": "Submitting answers...",
     "answeredCount": "Answered {{count}} question",
     "answeredCount_other": "Answered {{count}} questions"
+  },
+  "localAuth": {
+    "signInTitle": "Sign in to Vibe Kanban",
+    "signInDescription": "Sign in with your account on this server.",
+    "setupTitle": "Create the first account",
+    "setupDescription": "This server uses local accounts. Create the first account to protect it.",
+    "accountTitle": "Local account",
+    "localModeDescription": "This server uses local accounts stored on this machine; no cloud sign-in is needed.",
+    "username": "Username",
+    "password": "Password",
+    "confirmPassword": "Confirm password",
+    "signIn": "Sign in",
+    "signingIn": "Signing in…",
+    "createAccount": "Create account",
+    "creatingAccount": "Creating account…",
+    "passwordMismatch": "Passwords do not match.",
+    "signedInAs": "Signed in as {{name}}",
+    "signOut": "Sign out",
+    "signingOut": "Signing out…",
+    "loading": "Loading…",
+    "statusError": "Could not reach the server.",
+    "retry": "Retry",
+    "genericError": "Something went wrong. Please try again."
   }
 }

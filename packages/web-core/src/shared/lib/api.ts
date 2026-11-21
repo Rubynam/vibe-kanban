@@ -100,6 +100,9 @@ import {
   OpenRemoteWorkspaceInEditorRequest,
   OpenRemoteEditorResponse,
   ProfileResponse,
+  LocalAuthCredentials,
+  LocalAuthStatusResponse,
+  LocalUserProfile,
 } from 'shared/types';
 import type { Project as RemoteProject } from 'shared/remote-types';
 import type { WorkspaceWithSession } from '@/shared/types/attempt';
@@ -107,6 +110,7 @@ import { createWorkspaceWithSession } from '@/shared/types/attempt';
 import { resolveHostRequestScope } from '@/shared/lib/hostRequestScope';
 import { makeRequest as makeRemoteRequest } from '@/shared/lib/remoteApi';
 import { makeLocalApiRequest } from '@/shared/lib/localApiTransport';
+import { notifyLocalAuthRequired } from '@/shared/lib/auth/localAuthEvents';
 
 export class ApiError<E = unknown> extends Error {
   public status?: number;
@@ -131,10 +135,17 @@ const makeRequest = async (url: string, options: RequestInit = {}) => {
     headers.set('Content-Type', 'application/json');
   }
 
-  return makeLocalApiRequest(url, {
+  const response = await makeLocalApiRequest(url, {
     ...options,
     headers,
   });
+  if (
+    response.status === 401 &&
+    response.headers.get('x-vk-local-auth') === 'required'
+  ) {
+    notifyLocalAuthRequired();
+  }
+  return response;
 };
 
 const makeScopedRequest = async (
@@ -1230,6 +1241,49 @@ export const approvalsApi = {
     });
 
     return handleApiResponse<ApprovalStatus>(res);
+  },
+};
+
+// Local account sign-in API (works without the cloud API)
+export const localAuthApi = {
+  status: async (): Promise<LocalAuthStatusResponse> => {
+    const response = await makeRequest('/api/local-auth/status', {
+      cache: 'no-store',
+    });
+    return handleApiResponse<LocalAuthStatusResponse>(response);
+  },
+
+  setup: async (
+    credentials: LocalAuthCredentials
+  ): Promise<LocalUserProfile> => {
+    const response = await makeRequest('/api/local-auth/setup', {
+      method: 'POST',
+      body: JSON.stringify(credentials),
+    });
+    return handleApiResponse<LocalUserProfile>(response);
+  },
+
+  login: async (
+    credentials: LocalAuthCredentials
+  ): Promise<LocalUserProfile> => {
+    const response = await makeRequest('/api/local-auth/login', {
+      method: 'POST',
+      body: JSON.stringify(credentials),
+    });
+    return handleApiResponse<LocalUserProfile>(response);
+  },
+
+  logout: async (): Promise<void> => {
+    const response = await makeRequest('/api/local-auth/logout', {
+      method: 'POST',
+    });
+    if (!response.ok) {
+      throw new ApiError(
+        `Sign out failed with status ${response.status}`,
+        response.status,
+        response
+      );
+    }
   },
 };
 

@@ -129,46 +129,6 @@ pub fn expand_tilde(path_str: &str) -> std::path::PathBuf {
     shellexpand::tilde(path_str).as_ref().into()
 }
 
-/// Env var: directory (as seen by this process) that holds the user's projects,
-/// e.g. `/workspace` when a host folder is bind-mounted into a container.
-pub const WORKSPACE_DIR_ENV: &str = "VK_WORKSPACE_DIR";
-/// Env var: the same folder as seen on the host machine, e.g.
-/// `/Users/me/projects`. Host paths under it are translated into
-/// `VK_WORKSPACE_DIR`, so users can paste paths from their own machine.
-pub const HOST_WORKSPACE_DIR_ENV: &str = "VK_HOST_WORKSPACE_DIR";
-
-fn non_empty_env(name: &str) -> Option<PathBuf> {
-    std::env::var(name)
-        .ok()
-        .map(|v| v.trim().to_string())
-        .filter(|v| !v.is_empty())
-        .map(PathBuf::from)
-}
-
-/// Configured workspace directory, if `VK_WORKSPACE_DIR` is set.
-pub fn workspace_dir() -> Option<PathBuf> {
-    non_empty_env(WORKSPACE_DIR_ENV)
-}
-
-fn translate_host_path(path: &Path, host: Option<&Path>, workspace: Option<&Path>) -> PathBuf {
-    if let (Some(host), Some(workspace)) = (host, workspace)
-        && let Ok(rest) = path.strip_prefix(host)
-    {
-        return workspace.join(rest);
-    }
-    path.to_path_buf()
-}
-
-/// Expand `~` and translate host paths under `VK_HOST_WORKSPACE_DIR` into
-/// `VK_WORKSPACE_DIR`. Without those env vars this is just `expand_tilde`.
-pub fn resolve_user_path(path_str: &str) -> PathBuf {
-    translate_host_path(
-        &expand_tilde(path_str),
-        non_empty_env(HOST_WORKSPACE_DIR_ENV).as_deref(),
-        workspace_dir().as_deref(),
-    )
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -214,30 +174,6 @@ mod tests {
         assert_eq!(
             make_path_relative(&path_under_var, &worktree_private),
             "hello-world.txt"
-        );
-    }
-
-    #[test]
-    fn test_translate_host_path() {
-        let host = Path::new("/Users/me/projects");
-        let ws = Path::new("/workspace");
-        assert_eq!(
-            translate_host_path(Path::new("/Users/me/projects/app"), Some(host), Some(ws)),
-            PathBuf::from("/workspace/app")
-        );
-        assert_eq!(
-            translate_host_path(Path::new("/Users/me/projects"), Some(host), Some(ws)),
-            PathBuf::from("/workspace")
-        );
-        // Prefix match is per component, not per character
-        assert_eq!(
-            translate_host_path(Path::new("/Users/me/projects2/x"), Some(host), Some(ws)),
-            PathBuf::from("/Users/me/projects2/x")
-        );
-        // Not configured: unchanged
-        assert_eq!(
-            translate_host_path(Path::new("/Users/me/projects/app"), None, Some(ws)),
-            PathBuf::from("/Users/me/projects/app")
         );
     }
 }

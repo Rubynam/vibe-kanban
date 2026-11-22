@@ -25,6 +25,7 @@ use services::services::{
     file::FileService,
     file_search::FileSearchCache,
     filesystem::FilesystemService,
+    local_auth::{self, LocalAuthService},
     oauth_credentials::OAuthCredentials,
     pr_monitor::PrMonitorService,
     queued_message::QueuedMessageService,
@@ -66,6 +67,7 @@ pub struct LocalDeployment {
     queued_message_service: QueuedMessageService,
     remote_client: Result<RemoteClient, RemoteClientNotConfigured>,
     auth_context: AuthContext,
+    local_auth: LocalAuthService,
     oauth_handoffs: Arc<RwLock<HashMap<Uuid, PendingHandoff>>>,
     trusted_key_auth: TrustedKeyAuthRuntime,
     relay_signing: RelaySigningService,
@@ -203,6 +205,23 @@ impl Deployment for LocalDeployment {
             }
         };
 
+        let local_auth_enabled = local_auth::resolve_enabled(
+            std::env::var(local_auth::LOCAL_AUTH_ENV).ok().as_deref(),
+            remote_client.is_ok(),
+        );
+        if local_auth_enabled {
+            tracing::info!("Local sign-in is enabled; the API requires a local account session");
+        }
+        let local_auth = LocalAuthService::new(db.pool.clone(), local_auth_enabled);
+        if local_auth_enabled {
+            let local_auth = local_auth.clone();
+            tokio::spawn(async move {
+                if let Err(e) = local_auth.delete_expired_sessions().await {
+                    tracing::warn!(?e, "failed to delete expired local sessions");
+                }
+            });
+        }
+
         let oauth_handoffs = Arc::new(RwLock::new(HashMap::new()));
         let trusted_key_auth = TrustedKeyAuthRuntime::new(trusted_keys_path());
         let relay_signing = RelaySigningService::load_or_generate(&server_signing_key_path())
@@ -280,6 +299,7 @@ impl Deployment for LocalDeployment {
             queued_message_service,
             remote_client,
             auth_context,
+            local_auth,
             oauth_handoffs,
             trusted_key_auth,
             relay_signing,
@@ -400,6 +420,10 @@ impl LocalDeployment {
 
     pub fn remote_client(&self) -> Result<RemoteClient, RemoteClientNotConfigured> {
         self.remote_client.clone()
+    }
+
+    pub fn local_auth(&self) -> &LocalAuthService {
+        &self.local_auth
     }
 
     pub async fn get_login_status(&self) -> LoginStatus {

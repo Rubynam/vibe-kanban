@@ -128,6 +128,7 @@ The following environment variables can be configured at build time or runtime:
 | `VK_SHARED_API_BASE` | Runtime | Not set | Base URL for the remote/cloud API used by the local desktop app |
 | `VK_SHARED_RELAY_API_BASE` | Runtime | Not set | Base URL for the relay API used by tunnel-mode connections |
 | `VK_TUNNEL` | Runtime | Not set | Enable relay tunnel mode when set (requires relay API base URL) |
+| `VK_LOCAL_AUTH` | Runtime | `auto` | Require a local username/password sign-in for the whole API. `true`/`false` force it on or off; `auto` turns it on only when no cloud API (`VK_SHARED_API_BASE`) is configured. See [Local accounts](#local-accounts) |
 
 **Build-time variables** must be set when running `pnpm run build`. **Runtime variables** are read when the application starts.
 
@@ -144,6 +145,15 @@ VK_ALLOWED_ORIGINS=https://vk.example.com
 # Multiple origins (comma-separated)
 VK_ALLOWED_ORIGINS=https://vk.example.com,https://vk-staging.example.com
 ```
+
+#### Local accounts
+
+A self-hosted instance (for example the Docker image) can require a sign-in without any cloud service. Accounts live in the local SQLite database: passwords are hashed with Argon2id, and sessions use an `HttpOnly` cookie whose token is stored only as a SHA-256 hash.
+
+- With `VK_LOCAL_AUTH=auto` (the default), local sign-in is on whenever `VK_SHARED_API_BASE` is unset or empty. Set `VK_LOCAL_AUTH=true` to keep it on even with a cloud API configured, or `false` to turn it off.
+- On first visit the app asks you to create the first account. After that, `POST /api/local-auth/users` (signed in) adds more accounts.
+- Local sign-in guards every `/api` route. It is separate from cloud sign-in, which still unlocks organizations and remote projects when a cloud API is configured, and both can be used at once.
+- If you lose the only password, stop the server and delete the account: `sqlite3 db.v2.sqlite "DELETE FROM local_users;"`. The next visit offers to create a new first account.
 
 ### Remote Deployment
 

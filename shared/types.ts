@@ -266,6 +266,25 @@ export type TagSearchParams = { search: string | null, };
 
 export type TokenResponse = { access_token: string, expires_at: string | null, };
 
+export type LocalUserProfile = { id: string, username: string, created_at: string, };
+
+export type LocalAuthCredentials = { username: string, password: string, };
+
+export type LocalAuthStatusResponse = { 
+/**
+ * Whether this server requires a local sign-in.
+ */
+enabled: boolean, 
+/**
+ * True when local sign-in is enabled and no account exists yet, so the UI
+ * should offer to create the first one.
+ */
+setup_required: boolean, 
+/**
+ * The signed-in local account, if the request carried a valid session.
+ */
+user: LocalUserProfile | null, };
+
 export type UserSystemInfo = { version: string, config: Config, machine_id: string, login_status: LoginStatus, remote_auth_degraded: string | null, environment: Environment, 
 /**
  * Capabilities supported per executor (e.g., { "CLAUDE_CODE": ["SESSION_FORK"] })

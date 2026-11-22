@@ -25,6 +25,7 @@ use services::services::{
     config::{ConfigError, EditorOpenError},
     container::ContainerError,
     file::FileError,
+    local_auth::LocalAuthError,
     remote_client::RemoteClientError,
     repo::RepoError as RepoServiceError,
 };
@@ -77,6 +78,8 @@ pub enum ApiError {
     EditorOpen(#[from] EditorOpenError),
     #[error(transparent)]
     RemoteClient(#[from] RemoteClientError),
+    #[error(transparent)]
+    LocalAuth(#[from] LocalAuthError),
     #[error("Unauthorized")]
     Unauthorized,
     #[error("Bad request: {0}")]
@@ -453,6 +456,26 @@ impl IntoResponse for ApiError {
             }
 
             ApiError::RemoteClient(err) => remote_client_error(err),
+
+            ApiError::LocalAuth(err) => match err {
+                LocalAuthError::InvalidCredentials => ErrorInfo::with_status(
+                    StatusCode::UNAUTHORIZED,
+                    "LocalAuthError",
+                    "Invalid username or password.",
+                ),
+                LocalAuthError::AlreadySetUp | LocalAuthError::UsernameTaken => {
+                    ErrorInfo::conflict("LocalAuthError", err.to_string())
+                }
+                LocalAuthError::Validation(msg) => {
+                    ErrorInfo::bad_request("LocalAuthError", msg.clone())
+                }
+                LocalAuthError::Disabled => {
+                    ErrorInfo::not_found("LocalAuthError", "Local sign-in is disabled.")
+                }
+                LocalAuthError::Hash(_) | LocalAuthError::Database(_) => {
+                    ErrorInfo::internal("LocalAuthError")
+                }
+            },
 
             ApiError::Pty(PtyError::SessionNotFound(_)) => {
                 ErrorInfo::not_found("PtyError", "PTY session not found.")

@@ -22,11 +22,6 @@ import { tokenManager } from '@/shared/lib/auth/tokenManager';
 import { oauthApi, type AuthMethodsResponse } from '@/shared/lib/api';
 import { useTranslation } from 'react-i18next';
 import { defineModal } from '@/shared/lib/modals';
-import {
-  useLocalAuthMutations,
-  useLocalAuthStatus,
-} from '@/shared/hooks/auth/useLocalAuth';
-import { LocalSignInContainer } from '@/features/local-auth/ui/LocalSignInContainer';
 
 export type OAuthProvider = 'github' | 'google';
 type OAuthDialogProps = { initialProvider?: OAuthProvider };
@@ -49,12 +44,6 @@ const OAuthDialogImpl = create<OAuthDialogProps>(({ initialProvider }) => {
   const [localEmail, setLocalEmail] = useState('');
   const [localPassword, setLocalPassword] = useState('');
   const [isSubmittingLocal, setIsSubmittingLocal] = useState(false);
-  const { data: localAuthStatus, isPending: isLocalAuthPending } =
-    useLocalAuthStatus();
-  const { logout: localLogout } = useLocalAuthMutations();
-  // With local sign-in on, this dialog manages the local account instead of
-  // the cloud flow (which usually is not configured in that case).
-  const isLocalMode = localAuthStatus?.enabled ?? false;
   const {
     data: authMethods,
     error: authMethodsError,
@@ -64,7 +53,6 @@ const OAuthDialogImpl = create<OAuthDialogProps>(({ initialProvider }) => {
     queryKey: ['auth', 'methods'],
     queryFn: (): Promise<AuthMethodsResponse> => oauthApi.authMethods(),
     staleTime: 60_000,
-    enabled: !isLocalAuthPending && !isLocalMode,
   });
   const hasLocalAuth = authMethods?.local_auth_enabled ?? false;
   const oauthProviders = authMethods?.oauth_providers ?? [];
@@ -246,106 +234,14 @@ const OAuthDialogImpl = create<OAuthDialogProps>(({ initialProvider }) => {
   // Auto-start OAuth if a provider was preselected
   useEffect(() => {
     if (!modal.visible || !initialProvider) return;
-    if (isLocalAuthPending || isLocalMode) return;
     if (state.type !== 'select') return;
     if (autoStartedRef.current) return;
 
     autoStartedRef.current = true;
     handleProviderSelect(initialProvider);
-  }, [
-    handleProviderSelect,
-    initialProvider,
-    isLocalAuthPending,
-    isLocalMode,
-    modal.visible,
-    state.type,
-  ]);
-
-  const renderLocalContent = () => {
-    const user = localAuthStatus?.user ?? null;
-    const mode = localAuthStatus?.setup_required ? 'setup' : 'login';
-    return (
-      <>
-        <DialogHeader>
-          <div className="flex items-center gap-3">
-            <LogIn className="h-6 w-6 text-primary-foreground" />
-            <DialogTitle>
-              {user
-                ? t('localAuth.accountTitle')
-                : mode === 'setup'
-                  ? t('localAuth.setupTitle')
-                  : t('localAuth.signInTitle')}
-            </DialogTitle>
-          </div>
-          <DialogDescription className="text-left pt-2">
-            {t('localAuth.localModeDescription')}
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="space-y-3 py-4">
-          {user ? (
-            <p className="text-sm">
-              {t('localAuth.signedInAs', { name: user.username })}
-            </p>
-          ) : (
-            <LocalSignInContainer
-              key={mode}
-              mode={mode}
-              onSignedIn={() => {
-                modal.resolve(true);
-                modal.remove();
-              }}
-            />
-          )}
-          {localLogout.isError && (
-            <Alert variant="destructive">
-              <AlertDescription>
-                {localLogout.error instanceof Error
-                  ? localLogout.error.message
-                  : t('localAuth.genericError')}
-              </AlertDescription>
-            </Alert>
-          )}
-        </div>
-
-        <DialogFooter className="gap-2 sm:gap-0">
-          {user && (
-            <Button
-              variant="outline"
-              disabled={localLogout.isPending}
-              onClick={() =>
-                localLogout.mutate(undefined, {
-                  onSuccess: () => {
-                    modal.resolve(null);
-                    modal.remove();
-                  },
-                })
-              }
-            >
-              {localLogout.isPending
-                ? t('localAuth.signingOut')
-                : t('localAuth.signOut')}
-            </Button>
-          )}
-          <Button variant="ghost" onClick={handleClose}>
-            {t('buttons.close')}
-          </Button>
-        </DialogFooter>
-      </>
-    );
-  };
+  }, [handleProviderSelect, initialProvider, modal.visible, state.type]);
 
   const renderContent = () => {
-    if (isLocalAuthPending) {
-      return (
-        <div className="flex items-center justify-center py-6">
-          <Loader2 className="h-5 w-5 animate-spin" />
-        </div>
-      );
-    }
-    if (isLocalMode) {
-      return renderLocalContent();
-    }
     switch (state.type) {
       case 'select':
         return (

@@ -559,28 +559,5 @@
     "submitting": "回答を送信中...",
     "answeredCount": "{{count}}件の質問に回答済み",
     "answeredCount_other": "{{count}}件の質問に回答済み"
-  },
-  "localAuth": {
-    "signInTitle": "Vibe Kanban にサインイン",
-    "signInDescription": "このサーバーのアカウントでサインインしてください。",
-    "setupTitle": "最初のアカウントを作成",
-    "setupDescription": "このサーバーはローカルアカウントを使用します。保護するために最初のアカウントを作成してください。",
-    "accountTitle": "ローカルアカウント",
-    "localModeDescription": "このサーバーはこのマシンに保存されたローカルアカウントを使用します。クラウドへのサインインは不要です。",
-    "username": "ユーザー名",
-    "password": "パスワード",
-    "confirmPassword": "パスワード（確認）",
-    "signIn": "サインイン",
-    "signingIn": "サインイン中…",
-    "createAccount": "アカウントを作成",
-    "creatingAccount": "アカウントを作成中…",
-    "passwordMismatch": "パスワードが一致しません。",
-    "signedInAs": "{{name}} としてサインイン中",
-    "signOut": "サインアウト",
-    "signingOut": "サインアウト中…",
-    "loading": "読み込み中…",
-    "statusError": "サーバーに接続できませんでした。",
-    "retry": "再試行",
-    "genericError": "問題が発生しました。もう一度お試しください。"
   }
 }

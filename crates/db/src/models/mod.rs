@@ -3,8 +3,6 @@ pub mod execution_process;
 pub mod execution_process_logs;
 pub mod execution_process_repo_state;
 pub mod file;
-pub mod local_session;
-pub mod local_user;
 pub mod merge;
 pub mod project;
 pub mod pull_request;

@@ -4,7 +4,7 @@ use db::models::repo::{Repo as RepoModel, SearchMatchType, SearchResult};
 use git::{GitService, GitServiceError};
 use sqlx::SqlitePool;
 use thiserror::Error;
-use utils::path::resolve_user_path;
+use utils::path::expand_tilde;
 use uuid::Uuid;
 
 use super::file_search::{FileSearchCache, SearchQuery};
@@ -58,7 +58,7 @@ impl RepoService {
     }
 
     pub fn normalize_path(&self, path: &str) -> std::io::Result<PathBuf> {
-        std::path::absolute(resolve_user_path(path))
+        std::path::absolute(expand_tilde(path))
     }
 
     pub async fn register(

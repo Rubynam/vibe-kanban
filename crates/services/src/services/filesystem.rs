@@ -107,8 +107,8 @@ impl FilesystemService {
         #[cfg(not(feature = "qa-mode"))]
         {
             let base_path = path
-                .map(PathBuf::from)
-                .unwrap_or_else(Self::get_home_directory);
+                .map(|p| utils::path::resolve_user_path(&p))
+                .unwrap_or_else(Self::get_default_directory);
             Self::verify_directory(&base_path)?;
             self.list_git_repos_with_timeout(
                 vec![base_path],
@@ -184,12 +184,16 @@ impl FilesystemService {
         {
             let search_strings = ["repos", "dev", "work", "code", "projects"];
             let home_dir = Self::get_home_directory();
+            let workspace_dir = utils::path::workspace_dir().filter(|p| p.is_dir());
             let mut paths: Vec<PathBuf> = search_strings
                 .iter()
                 .map(|s| home_dir.join(s))
                 .filter(|p| p.exists() && p.is_dir())
                 .collect();
             paths.insert(0, home_dir);
+            if let Some(ws) = workspace_dir {
+                paths.insert(0, ws);
+            }
             if let Some(cwd) = std::env::current_dir().ok()
                 && cwd.exists()
                 && cwd.is_dir()
@@ -288,6 +292,14 @@ impl FilesystemService {
         Ok(git_repos)
     }
 
+    /// Where the browser starts: the configured workspace if it exists,
+    /// otherwise the user's home directory.
+    fn get_default_directory() -> PathBuf {
+        utils::path::workspace_dir()
+            .filter(|p| p.is_dir())
+            .unwrap_or_else(Self::get_home_directory)
+    }
+
     fn get_home_directory() -> PathBuf {
         dirs::home_dir()
             .or_else(dirs::desktop_dir)
@@ -318,8 +330,8 @@ impl FilesystemService {
         path: Option<String>,
     ) -> Result<DirectoryListResponse, FilesystemError> {
         let path = path
-            .map(PathBuf::from)
-            .unwrap_or_else(Self::get_home_directory);
+            .map(|p| utils::path::resolve_user_path(&p))
+            .unwrap_or_else(Self::get_default_directory);
         Self::verify_directory(&path)?;
 
         let entries = fs::read_dir(&path)?;

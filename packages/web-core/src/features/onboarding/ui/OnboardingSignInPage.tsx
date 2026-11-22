@@ -17,7 +17,6 @@ import { getFirstProjectDestination } from '@/shared/lib/firstProjectDestination
 import { useOrganizationStore } from '@/shared/stores/useOrganizationStore';
 import { isTauriApp } from '@/shared/lib/platform';
 import { useAppNavigation } from '@/shared/hooks/useAppNavigation';
-import { useLocalAuthStatus } from '@/shared/hooks/auth/useLocalAuth';
 
 type OnboardingDestination =
   { kind: 'workspaces-create' } | { kind: 'project'; projectId: string };
@@ -88,13 +87,6 @@ export function OnboardingSignInPage() {
     null
   );
   const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false);
-  // With local sign-in on, the user already signed in to this server before
-  // reaching onboarding, so the cloud sign-in step is replaced by a Continue.
-  const { data: localAuthStatus, isPending: isLocalAuthPending } =
-    useLocalAuthStatus();
-  const localUsername = localAuthStatus?.enabled
-    ? (localAuthStatus.user?.username ?? null)
-    : null;
   const {
     data: authMethods,
     error: authMethodsError,
@@ -103,7 +95,6 @@ export function OnboardingSignInPage() {
     queryKey: ['auth', 'methods'],
     queryFn: (): Promise<AuthMethodsResponse> => oauthApi.authMethods(),
     staleTime: 60_000,
-    enabled: !isLocalAuthPending && localUsername === null,
   });
   const hasLocalAuth = authMethods?.local_auth_enabled ?? false;
   const oauthProviders = authMethods?.oauth_providers ?? [];
@@ -125,8 +116,7 @@ export function OnboardingSignInPage() {
       ? '/vibe-kanban-logo-dark.svg'
       : '/vibe-kanban-logo.svg';
 
-  const isCloudLoggedIn = loginStatus?.status === 'loggedin';
-  const isLoggedIn = isCloudLoggedIn || localUsername !== null;
+  const isLoggedIn = loginStatus?.status === 'loggedin';
 
   useEffect(() => {
     if (loading || !config || hasTrackedStageViewRef.current) return;
@@ -312,22 +302,17 @@ export function OnboardingSignInPage() {
             <section className="space-y-base">
               <p className="text-sm text-normal text-center">
                 {t('onboardingSignIn.signedInAs', {
-                  name: isCloudLoggedIn
-                    ? loginStatus.profile?.username ||
-                      loginStatus.profile?.email ||
-                      'your account'
-                    : localUsername,
+                  name:
+                    loginStatus.profile?.username ||
+                    loginStatus.profile?.email ||
+                    'your account',
                 })}
               </p>
               <div className="flex justify-end">
                 <PrimaryButton
                   value={saving ? 'Continuing...' : 'Continue'}
                   onClick={() =>
-                    void finishOnboarding({
-                      method: isCloudLoggedIn
-                        ? 'continue_logged_in'
-                        : 'local_auth',
-                    })
+                    void finishOnboarding({ method: 'continue_logged_in' })
                   }
                   disabled={saving}
                 />

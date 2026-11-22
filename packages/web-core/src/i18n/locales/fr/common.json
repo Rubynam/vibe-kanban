@@ -559,28 +559,5 @@
     "submitting": "Envoi des réponses...",
     "answeredCount": "Répondu à {{count}} question",
     "answeredCount_other": "Répondu à {{count}} questions"
-  },
-  "localAuth": {
-    "signInTitle": "Se connecter à Vibe Kanban",
-    "signInDescription": "Connectez-vous avec votre compte sur ce serveur.",
-    "setupTitle": "Créer le premier compte",
-    "setupDescription": "Ce serveur utilise des comptes locaux. Créez le premier compte pour le protéger.",
-    "accountTitle": "Compte local",
-    "localModeDescription": "Ce serveur utilise des comptes locaux stockés sur cette machine ; aucune connexion cloud n'est nécessaire.",
-    "username": "Nom d'utilisateur",
-    "password": "Mot de passe",
-    "confirmPassword": "Confirmer le mot de passe",
-    "signIn": "Se connecter",
-    "signingIn": "Connexion…",
-    "createAccount": "Créer le compte",
-    "creatingAccount": "Création du compte…",
-    "passwordMismatch": "Les mots de passe ne correspondent pas.",
-    "signedInAs": "Connecté en tant que {{name}}",
-    "signOut": "Se déconnecter",
-    "signingOut": "Déconnexion…",
-    "loading": "Chargement…",
-    "statusError": "Impossible de joindre le serveur.",
-    "retry": "Réessayer",
-    "genericError": "Une erreur s'est produite. Veuillez réessayer."
   }
 }

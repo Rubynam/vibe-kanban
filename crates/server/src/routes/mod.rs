@@ -18,7 +18,6 @@ pub mod execution_processes;
 pub mod frontend;
 pub mod health;
 pub mod host_relay;
-pub mod local_auth;
 pub mod oauth;
 pub mod organizations;
 pub mod preview;
@@ -71,14 +70,9 @@ pub fn router(deployment: DeploymentImpl) -> IntoMakeService<Router> {
         .with_state(deployment.clone());
 
     let api_routes = Router::new()
-        .merge(local_auth::router())
         .merge(relay_auth::router())
         .merge(host_relay::router(&deployment))
         .merge(relay_signed_routes)
-        .layer(axum::middleware::from_fn_with_state(
-            deployment.clone(),
-            middleware::require_local_session,
-        ))
         .layer(ValidateRequestHeaderLayer::custom(
             middleware::validate_origin,
         ))

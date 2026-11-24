@@ -14,7 +14,7 @@ use tokio::{
 };
 use workspace_utils::command_ext::GroupSpawnNoWindowExt;
 
-use super::{ClaudeCode, ClaudeJson, ClaudePlugin, base_command};
+use super::{ClaudeCode, ClaudeJson, ClaudePlugin, cli::base_command};
 use crate::{
     command::{CommandBuildError, CommandBuilder, apply_overrides},
     env::{ExecutionEnv, RepoContext},

@@ -1,4 +1,5 @@
 // SDK submodules
+pub mod cli;
 pub mod client;
 pub mod protocol;
 pub mod slash_commands;
@@ -29,6 +30,7 @@ use workspace_utils::{
 };
 
 use self::{
+    cli::{CLI_DEFAULT_MODEL, base_command},
     client::{AUTO_APPROVE_CALLBACK_ID, ClaudeAgentClient, STOP_GIT_CHECK_CALLBACK_ID},
     protocol::ProtocolPeer,
     types::{ControlRequestType, ControlResponseType, PermissionMode},
@@ -57,14 +59,6 @@ use crate::{
 };
 
 const SUPPRESSED_STDERR_PATTERNS: &[&str] = &["[WARN] Fast mode requires the native binary"];
-
-fn base_command(claude_code_router: bool) -> &'static str {
-    if claude_code_router {
-        "npx -y @musistudio/claude-code-router@1.0.66 code"
-    } else {
-        "npx -y @anthropic-ai/claude-code@2.1.119"
-    }
-}
 
 fn normalize_claude_stderr_logs(
     msg_store: Arc<MsgStore>,
@@ -272,12 +266,15 @@ fn default_discovered_options() -> crate::executor_discovery::ExecutorDiscovered
     let effort_options =
         ReasoningOption::from_names(["low", "medium", "high", "xhigh", "max"].map(String::from));
 
-    let supports_effort = |id: &str| -> bool { id.contains("opus") || id.contains("sonnet") };
+    let supports_effort = |id: &str| -> bool {
+        id == CLI_DEFAULT_MODEL || id.contains("opus") || id.contains("sonnet")
+    };
 
     ExecutorDiscoveredOptions {
         model_selector: ModelSelectorConfig {
             providers: vec![],
             models: [
+                (CLI_DEFAULT_MODEL, "Default (recommended)"),
                 ("opus", "Opus"),
                 ("opus[1m]", "Opus (1M context)"),
                 ("sonnet", "Sonnet"),
@@ -295,7 +292,7 @@ fn default_discovered_options() -> crate::executor_discovery::ExecutorDiscovered
                 },
             })
             .collect(),
-            default_model: Some("opus".to_string()),
+            default_model: Some(CLI_DEFAULT_MODEL.to_string()),
             agents: vec![],
             permissions: vec![
                 PermissionPolicy::Auto,
@@ -503,6 +500,8 @@ impl StandardCodingAgentExecutor for ClaudeCode {
             (None, opts)
         };
 
+        let mut initial_options = initial_options;
+        initial_options.loading_models = true;
         let initial_patch = patch::executor_discovered_options(initial_options);
 
         let this = self.clone();
@@ -511,6 +510,17 @@ impl StandardCodingAgentExecutor for ClaudeCode {
         let discovery_stream = async_stream::stream! {
             let discovery_path = target_path.as_deref().unwrap_or(Path::new(".")).to_path_buf();
             let mut final_options = default_discovered_options();
+
+            // Models come from the installed CLI itself, so they always match what `--model` accepts.
+            match this.discover_cli_models(&discovery_path).await {
+                Ok(models) if !models.is_empty() => {
+                    final_options.model_selector.models = models.clone();
+                    yield patch::update_models(models);
+                }
+                Ok(_) => tracing::warn!("Claude Code reported no models; keeping fallback list"),
+                Err(e) => tracing::warn!("Failed to discover Claude Code models: {}", e),
+            }
+            yield patch::models_loaded();
 
             match this.discover_agents_and_slash_commands_initial(&discovery_path).await {
                 Ok((mut agent_options, slash_commands_initial, plugins)) => {

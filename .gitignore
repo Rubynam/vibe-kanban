@@ -99,3 +99,7 @@ Caddyfile.dev
 # Local npx release (scripts/release-local.sh)
 .env.release
 release-out/
+
+# BMAD install and local Claude Code config
+/_bmad/
+/.claude/
